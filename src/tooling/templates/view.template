@@ -1,0 +1,26 @@
+const std = @import("std");
+const zap = @import("zap");
+
+const View = @import("../view.zig").View;
+
+const {{view_title}}Data = struct {
+    welcome_message: []const u8
+};
+
+pub const {{view_title}}View = View({{view_title}}Data);
+
+pub const {{view_name}}_view = {{view_title}}View {
+    .path = "{{{path}}}",
+    .template_file = {{{view_template_file}}},
+    .get_context = &get_context,
+    .content_type = .{{content_type}},
+};
+
+fn get_context(view: {{view_title}}View, r: zap.Request) {{view_title}}Data {
+    _ = view;
+    _ = r;
+    
+    return {{view_title}}Data{
+        .welcome_message = "Welcome to your new {{view_title}} view"
+    };
+}
