@@ -5,7 +5,7 @@ const http = zap.http;
 
 const ServerConfig = @import("config.zig").ServerConfig;
 const get_routes = @import("router.zig").get_routes;
-const View = @import("router.zig").View;
+pub const View = @import("router.zig").View;
 
 var alloc = std.heap.page_allocator;
 

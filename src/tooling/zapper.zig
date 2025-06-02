@@ -5,9 +5,7 @@ const Mustache = zap.Mustache;
 
 const clap = @import("clap");
 
-const FileInfo = @import("util.zig").FileInfo;
-const snake_to_caps = @import("util.zig").snake_to_caps;
-const caps_to_snake = @import("util.zig").caps_to_snake;
+const ViewMaker = @import("view_maker.zig").ViewMaker;
 
 const VIEW_TEMPLATE = "src/tooling/templates/view.template";
 const TEMPLATE_TEMPLATE = "src/tooling/templates/template.template";
@@ -28,67 +26,6 @@ const CreateViewError = error{
 
 const ZapperError = MainError || CreateViewError;
 
-fn create_view_source(a: std.mem.Allocator, name: []const u8, content_type: zap.ContentType, path: []const u8, raw: bool, overwrite: bool) !void {
-    const snake = try caps_to_snake(a, name);
-    defer a.free(snake);
-
-    const file_path = try std.fmt.allocPrint(
-        a, "src/views/{s}.zig", .{ snake }
-    );
-    defer a.free(file_path);
-
-    const file_info = try FileInfo.from_path(file_path);
-    
-    const view_name = file_info.get_stripped_name() orelse return error.Error;
-    
-    const view_template_file = if (raw) "null" else try std.fmt.allocPrint(
-        a, "\"src/views/{s}.html\"", .{ snake }
-    );
-    defer if (!raw) a.free(view_template_file);
-
-    const template = try std.fs.cwd().readFileAlloc(a, VIEW_TEMPLATE, TEMPLATE_SIZE); 
-    defer a.free(template);
-
-    var mustache = try Mustache.fromData(template);
-    defer mustache.deinit();
-
-    const view_title = try snake_to_caps(a, view_name);
-    defer a.free(view_title);
-
-    if (mustache.build(.{
-        .view_name = view_name,
-        .view_title = view_title,
-        .content_type = @tagName(content_type),
-        .path = path,
-        .view_template_file = view_template_file
-    }).str()) |rendered| {
-        const file = try file_info.to_new_file(overwrite);
-        try file.seekTo(0);
-        try file.writeAll(rendered);
-        file.close();
-    } else return CreateViewError.ViewTemplateBuildFailed;
-}
-
-fn create_view_template_source(a: std.mem.Allocator, name: []const u8, overwrite: bool) !void {
-    const snake = try caps_to_snake(a, name);
-    defer a.free(snake);
-
-    const file_path = try std.fmt.allocPrint(
-        a, "src/views/{s}.html", .{ snake }
-    );
-    defer a.free(file_path);
-    
-    const file_info = try FileInfo.from_path(file_path);
-    
-    const template = try std.fs.cwd().readFileAlloc(a, TEMPLATE_TEMPLATE, TEMPLATE_SIZE); 
-    defer a.free(template);
-
-    const file = try file_info.to_new_file(overwrite);
-    try file.seekTo(0);
-    try file.writeAll(template);
-
-    file.close();
-}
 
 fn error_handler(err: anyerror) void {
     const help_msg = "See --help for details.";
@@ -220,13 +157,21 @@ fn create_view(alloc: std.mem.Allocator, iter: *std.process.ArgIterator) !void {
     const raw = res.args.raw == 1;
     const overwrite = res.args.overwrite == 1;
 
-    std.debug.print("Creating {s} view {s} with content type {any} and path {s}\n", .{
-        if (raw) "raw" else "template",
-        name,
-        content_type,
-        path
+    // std.debug.print("Creating {s} view {s} with content type {any} and path {s}\n", .{
+    //     if (raw) "raw" else "template",
+    //     name,
+    //     content_type,
+    //     path
+    // });
+
+    const view_maker = try ViewMaker.new(alloc, .{
+        .name = name,
+        .content_type = content_type,
+        .url_path = path,
+        .raw = raw,
+        .overwrite = overwrite
     });
+    defer view_maker.deinit();
     
-    try create_view_source(alloc, name, content_type, path, raw, overwrite);
-    if (!raw) try create_view_template_source(alloc, name, overwrite);
+    try view_maker.make();
 }
