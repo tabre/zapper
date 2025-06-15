@@ -56,6 +56,8 @@ pub const ViewMaker = struct {
         var base_name: []const u8 = undefined;
         if (std.mem.lastIndexOfScalar(u8, snake, '/')) |last_slash_i| {
             base_name = snake[last_slash_i + 1..];
+        } else {
+            base_name = snake;
         }
 
         const base_name_caps = try snake_to_caps(alloc, base_name); 
