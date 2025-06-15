@@ -1,3 +1,4 @@
+// THIS FILE MAINTAINED BY ZAPPER - USE CAUTION WHEN EDITING 
 const std = @import("std");
 const zap = @import("zap");
 
@@ -6,12 +7,12 @@ const home_view = @import("views/home.zig").home_view;
 const HomeView = @import("views/home.zig").HomeView;
 
 const json_view = @import("views/json.zig").json_view;
-const JSONView = @import("views/json.zig").JSONView;
+const JSONView = @import("views/json.zig").JSONView;  // {{{import_lines}}}
 
 // All view types go here
 pub const View = union(enum) {
     HomeView: HomeView,
-    JSONView: JSONView
+    JSONView: JSONView,  // {{{enum_line}}}
 };
 
 // Register routes for views
@@ -20,7 +21,7 @@ pub fn get_routes(alloc: std.mem.Allocator) !std.StringHashMap(View) {
 
     // All views go here
     try routes.put(home_view.path, View{ .HomeView = home_view});
-    try routes.put(json_view.path, View{ .JSONView = json_view});
+    try routes.put(json_view.path, View{ .JSONView = json_view});  // {{{route_line}}}
     
     return routes;
 }

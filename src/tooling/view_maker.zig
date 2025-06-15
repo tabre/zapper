@@ -1,5 +1,5 @@
 const std = @import("std");
-
+ 
 const zap = @import("zap");
 const Mustache = zap.Mustache;
 
@@ -25,7 +25,8 @@ pub const ViewMakerArgs = struct {
     content_type: zap.ContentType,
     url_path: []const u8,
     raw: bool,
-    overwrite: bool
+    overwrite: bool,
+    add_route: bool
 };
 
 pub const ViewMaker = struct {
@@ -41,11 +42,12 @@ pub const ViewMaker = struct {
     content_type: []const u8,
     raw: bool,
     overwrite: bool,
+    add_route: bool,
 
     const Self = @This();
     var alloc: std.mem.Allocator = undefined;
 
-    pub fn new(a: std.mem.Allocator, o: ViewMakerArgs) !Self {
+    pub fn init(a: std.mem.Allocator, o: ViewMakerArgs) !Self {
         alloc = a;
 
         const snake = try caps_to_snake(a, o.name);
@@ -77,7 +79,8 @@ pub const ViewMaker = struct {
             .url_path = o.url_path,
             .content_type = @tagName(o.content_type),
             .raw = o.raw,
-            .overwrite = o.overwrite
+            .overwrite = o.overwrite,
+            .add_route = o.add_route,
         };
     }
 
@@ -135,9 +138,71 @@ pub const ViewMaker = struct {
         file.close();
     }
 
+    fn update_router(self: Self) !void {
+        const template = try self.router_file.read_file(alloc);        
+        defer alloc.free(template);
+
+        var mustache = try Mustache.fromData(template);
+        defer mustache.deinit();
+
+        const import_path = self.view_out.path[4..]; 
+
+        const import_lines = try std.fmt.allocPrint(
+            alloc, 
+            \\
+            \\
+            \\const {s} = @import("{s}").{s};
+            \\const {s} = @import("{s}").{s};  // {{{{{{import_lines}}}}}}
+            ,.{
+                self.view_instance_name,
+                import_path,
+                self.view_instance_name,
+                self.view_struct_name,
+                import_path,
+                self.view_struct_name
+            }
+        );
+        defer alloc.free(import_lines);
+
+        const enum_line = try std.fmt.allocPrint(
+            alloc, 
+            \\
+            \\    {s}: {s}  // {{{{{{enum_line}}}}}}
+            ,.{
+                self.view_struct_name,
+                self.view_struct_name
+            }
+        );
+        defer alloc.free(enum_line);
+        
+        const route_line = try std.fmt.allocPrint(
+            alloc, 
+            \\
+            \\    try routes.put({s}.path, View{{ .{s} = {s} }});  // {{{{{{route_line}}}}}}
+            ,.{
+                self.view_instance_name,
+                self.view_struct_name,
+                self.view_instance_name
+            }
+        );
+        defer alloc.free(route_line);
+
+        if (mustache.build(.{
+            .import_lines = import_lines,
+            .enum_line = enum_line,
+            .route_line = route_line,
+        }).str()) |rendered| {
+            const file = try self.router_file.to_new_file(true);
+            try file.seekTo(0);
+            try file.writeAll(rendered);
+            file.close();
+        } else return ViewMakerError.ViewTemplateBuildFailed;
+    }
+
     pub fn make(self: Self) !void {
         try self.create_view_source();
         if (!self.raw) try self.create_view_template_source();
+        if (self.add_route) try self.update_router();
         return;
     }
 

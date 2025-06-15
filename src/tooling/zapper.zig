@@ -121,6 +121,7 @@ fn create_view(alloc: std.mem.Allocator, iter: *std.process.ArgIterator) !void {
         \\-h, --help            Display this help and exit
         \\-r, --raw             Raw view (no template file)
         \\-o, --overwrite       Overwrite existing files
+        \\-n, --no_route        Disable updating of router
         \\
     );
 
@@ -156,6 +157,7 @@ fn create_view(alloc: std.mem.Allocator, iter: *std.process.ArgIterator) !void {
 
     const raw = res.args.raw == 1;
     const overwrite = res.args.overwrite == 1;
+    const add_route = res.args.no_route != 1;
 
     // std.debug.print("Creating {s} view {s} with content type {any} and path {s}\n", .{
     //     if (raw) "raw" else "template",
@@ -164,12 +166,13 @@ fn create_view(alloc: std.mem.Allocator, iter: *std.process.ArgIterator) !void {
     //     path
     // });
 
-    const view_maker = try ViewMaker.new(alloc, .{
+    const view_maker = try ViewMaker.init(alloc, .{
         .name = name,
         .content_type = content_type,
         .url_path = path,
         .raw = raw,
-        .overwrite = overwrite
+        .overwrite = overwrite,
+        .add_route = add_route
     });
     defer view_maker.deinit();
     
