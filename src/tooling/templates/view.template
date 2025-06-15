@@ -21,6 +21,6 @@ fn get_context(view: {{{view_struct_name}}}, r: zap.Request) {{{data_struct_name
     _ = r;
     
     return {{{data_struct_name}}}{
-        .welcome_message = "Welcome to your new {{{view_struct_name}}}"
+        .welcome_message = "Welcome to {{{view_struct_name}}}"
     };
 }
