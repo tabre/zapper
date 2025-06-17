@@ -15,6 +15,7 @@ pub fn View(comptime T: type) type {
         template_file: ?[]const u8,
         get_context: *const fn(Self, zap.Request) T,
         content_type: zap.ContentType,
+        deinit: *const fn(Self) void,
         
         var alloc: ?std.mem.Allocator = null;
         const Self = @This();
@@ -27,6 +28,11 @@ pub fn View(comptime T: type) type {
         pub fn set_alloc(self: Self, a: std.mem.Allocator) void {
             _ = self;
            alloc = a; 
+        }
+
+        pub fn get_alloc(self: Self) ?std.mem.Allocator {
+            _ = self;
+            return alloc;
         }
         
         pub fn render(self: Self, r: zap.Request) !void {

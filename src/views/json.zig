@@ -14,6 +14,7 @@ pub const json_view = JSONView {
     .template_file = null,
     .get_context = &get_context,
     .content_type = .JSON,
+    .deinit = &deinit
 };
 
 fn get_context(view: JSONView, r: zap.Request) JSONData {
@@ -23,4 +24,8 @@ fn get_context(view: JSONView, r: zap.Request) JSONData {
     return JSONData{
         .welcome_message = "Welcome to your new JSON view"
     };
+}
+
+fn deinit(view: JSONView) void {
+    _ = view;
 }

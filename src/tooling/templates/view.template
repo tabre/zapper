@@ -14,6 +14,7 @@ pub const {{{view_instance_name}}} = {{{view_struct_name}}}{
     .template_file = {{{view_template_file}}},
     .get_context = &get_context,
     .content_type = .{{{content_type}}},
+    .deinit = &deinit
 };
 
 fn get_context(view: {{{view_struct_name}}}, r: zap.Request) {{{data_struct_name}}} {
@@ -23,4 +24,8 @@ fn get_context(view: {{{view_struct_name}}}, r: zap.Request) {{{data_struct_name
     return {{{data_struct_name}}}{
         .welcome_message = "Welcome to {{{view_struct_name}}}"
     };
+}
+
+fn deinit(view: {{{view_struct_name}}}) void {
+    _ = view;
 }

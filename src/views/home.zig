@@ -14,6 +14,7 @@ pub const home_view = HomeView {
     .template_file = "src/views/home.html",
     .get_context = &get_context,
     .content_type = .HTML,
+    .deinit = &deinit
 };
 
 fn get_context(view: HomeView, r: zap.Request) HomeData {
@@ -23,4 +24,8 @@ fn get_context(view: HomeView, r: zap.Request) HomeData {
     return HomeData{
         .welcome_message = "Welcome to your new Home view"
     };
+}
+
+fn deinit(view: HomeView) void {
+    _ = view;
 }
