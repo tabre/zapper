@@ -1,6 +1,7 @@
 const std = @import("std");
 const json = std.json;
 
+
 pub const ServerConfig = struct {
     interface: []const u8,
     port: u16,
@@ -12,12 +13,35 @@ pub const ServerConfig = struct {
     const Self = @This();
     var alloc: ?std.mem.Allocator = null;
 
-    pub fn from_file(a: std.mem.Allocator, f: []const u8) !ServerConfig {
+    pub fn get_defaults() ServerConfig {
+        return Self{
+            .interface = "0.0.0.0",
+            .port = 3000,
+            .public_folder = "public",
+            .log = true,
+            .threads = 2,
+            .workers = 2
+        };
+    }
+
+    pub fn from_file(a: std.mem.Allocator, f: []const u8) !Self {
         alloc = a;
-        const cfg_json = try std.fs.cwd().readFileAlloc(a, f, 1048576); 
+        const cfg_json = std.fs.cwd().readFileAlloc(a, f, 1048576) catch |e| {
+            std.debug.print(
+                "{!} Error reading config file: {s}.\nLoading defaults.\n", 
+                .{ e, f }
+            );
+            return Self.get_defaults();
+        };
         errdefer a.free(cfg_json);
         
-        const cfg_parsed =  try json.parseFromSlice(Self, a, cfg_json, .{});
+        const cfg_parsed =  json.parseFromSlice(Self, a, cfg_json, .{}) catch |e| {
+            std.debug.print(
+                "{!} Error reading config file:{s}.\nLoading defaults.\n",
+                .{ e, f }
+            );
+            return Self.get_defaults();
+        };
         errdefer cfg_parsed.deinit();
         
         return cfg_parsed.value;
