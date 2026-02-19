@@ -90,10 +90,10 @@ pub const ViewMaker = struct {
         var count: usize = 1;
         for (self.view_out.path) |c| { if (c == '/') count += 1; }
     
-        var list = std.ArrayList(u8).init(alloc);
+        var list: std.ArrayList(u8) = .empty;
 
         for (0..count - 2) |_|  {
-            try list.appendSlice("../");
+            try list.appendSlice(alloc, "../");
         }
 
         return list;
@@ -110,8 +110,8 @@ pub const ViewMaker = struct {
                 else try std.fmt.allocPrint(alloc, "\"{s}\"", .{ self.template_out.?.path });
         defer if (!self.raw) alloc.free(view_template_file);
 
-        const relative_root_path = try self.get_view_relative_root_path();
-        defer relative_root_path.deinit();
+        var relative_root_path = try self.get_view_relative_root_path();
+        defer relative_root_path.deinit(alloc);
 
         if (mustache.build(.{
             .relative_root_path = relative_root_path.items,

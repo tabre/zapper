@@ -59,8 +59,9 @@ pub fn View(comptime T: type) type {
                 }
 
             } else if (self.content_type == zap.ContentType.JSON) {
-                ret = try json.stringifyAlloc(a, context, .{});
+                ret = try json.Stringify.valueAlloc(a, context, .{});
             }
+    
             
             try r.setContentType(self.content_type);
             try r.sendBody(ret);

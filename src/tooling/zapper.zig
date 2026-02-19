@@ -33,31 +33,31 @@ fn error_handler(err: anyerror) void {
     switch (err) {
         error.NoCommand, error.InvalidCommand => {
             std.debug.print(
-                "{?}: You must specify a valid command. {s}\n",
+                "{any}: You must specify a valid command. {s}\n",
                 .{ err, help_msg }
             );
         },
         error.ViewNameRequired => {
             std.debug.print(
-                "{?}: You must specify a valid name for your view. {s}\n",
+                "{any}: You must specify a valid name for your view. {s}\n",
                 .{ err, help_msg }
             );
         },
         error.ViewContentTypeRequired => {
             std.debug.print(
-                "{?}: You must specify a valid content-type for your view. {s}\n",
+                "{any}: You must specify a valid content-type for your view. {s}\n",
                 .{ err, help_msg }
             );
         },
         error.ViewInvalidContentType => {
             std.debug.print(
-                "{?}: You must specify a valid content type. {s}\n",
+                "{any}: You must specify a valid content type. {s}\n",
                 .{ err, help_msg }
             );
         },
         else => {
             std.debug.print(
-                "{?}: {s}\n",
+                "{any}: {s}\n",
                 .{ err, help_msg }
             );
         }
@@ -105,7 +105,7 @@ pub fn main() !void {
     defer res.deinit();
 
     if (res.args.help != 0)
-        return clap.help(std.io.getStdErr().writer(), clap.Help, &main_params, .{});
+        return clap.helpToFile(.stderr(), clap.Help, &main_params, .{});
 
     const command = res.positionals[0] orelse return error_handler(ZapperError.InvalidCommand);
     switch(command) {
@@ -144,7 +144,7 @@ fn create_view(alloc: std.mem.Allocator, iter: *std.process.ArgIterator) !void {
     defer res.deinit();
 
     if (res.args.help == 1)
-        return clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{});
+        return clap.helpToFile(.stderr(), clap.Help, &params, .{});
     
     const name = res.positionals[0] orelse 
         return error_handler(ZapperError.ViewNameRequired);

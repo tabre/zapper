@@ -28,7 +28,7 @@ pub const ServerConfig = struct {
         alloc = a;
         const cfg_json = std.fs.cwd().readFileAlloc(a, f, 1048576) catch |e| {
             std.debug.print(
-                "{!} Error reading config file: {s}.\nLoading defaults.\n", 
+                "{any} Error reading config file: {s}.\nLoading defaults.\n", 
                 .{ e, f }
             );
             return Self.get_defaults();
@@ -37,7 +37,7 @@ pub const ServerConfig = struct {
         
         const cfg_parsed =  json.parseFromSlice(Self, a, cfg_json, .{}) catch |e| {
             std.debug.print(
-                "{!} Error reading config file:{s}.\nLoading defaults.\n",
+                "{any} Error reading config file:{s}.\nLoading defaults.\n",
                 .{ e, f }
             );
             return Self.get_defaults();
